@@ -1,4 +1,8 @@
+import json
+import uuid
+
 import httpx
+import pika
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, select
@@ -6,6 +10,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 CATALOGUE_URL = "http://localhost:8001"
 STOCK_URL = "http://localhost:8002"
+RABBIT_HOST = "localhost"
 
 engine = create_engine("sqlite:///commande.db")
 
@@ -25,6 +30,24 @@ class Commande(Base):
 Base.metadata.create_all(engine)
 
 app = FastAPI(title="commande")
+
+def publier_evenement(evenement: dict):
+    try:
+        connexion = pika.BlockingConnection(
+            pika.ConnectionParameters(RABBIT_HOST)
+        )
+        canal = connexion.channel()
+        canal.exchange_declare(
+            exchange="distrilog.events", exchange_type="topic", durable=True
+        )
+        canal.basic_publish(
+            exchange="distrilog.events",
+            routing_key="commande.passee",
+            body=json.dumps(evenement),
+        )
+        connexion.close()
+    except Exception as erreur:
+        print("Événement non publié :", erreur)
 
 
 class CommandeIn(BaseModel):
