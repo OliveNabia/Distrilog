@@ -9,7 +9,9 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-RABBIT_HOST = "localhost"
+import os
+
+RABBIT_HOST = os.environ.get("RABBIT_HOST", "localhost")
 engine = create_engine("sqlite:///livraison.db")
 
 
