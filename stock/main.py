@@ -2,8 +2,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+import os
 
-engine = create_engine("sqlite:///stock.db")
+engine = create_engine(
+os.environ.get("DATABASE_URL", "sqlite:///stock.db")
+)
 
 class Base(DeclarativeBase):
     pass
@@ -20,16 +23,32 @@ app = FastAPI(title="stock")
 class Quantite(BaseModel):
     quantite: int
 
-@app.put("/stock/{sku}")
-def definir_stock(sku: str, q: Quantite):
+@app.post("/stock/{sku}/ajouter")
+def ajouter_stock(sku: str, q: Quantite):
+    if q.quantite <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail="La quantité ajoutée doit être positive"
+        )
+
     with Session(engine) as db:
         ligne = db.get(LigneStock, sku)
+
         if ligne is None:
-            db.add(LigneStock(sku=sku, quantite=q.quantite))
+            ligne = LigneStock(sku=sku, quantite=q.quantite)
+            db.add(ligne)
         else:
-            ligne.quantite = q.quantite
+            ligne.quantite += q.quantite
+
         db.commit()
-    return {"sku": sku, "quantite": q.quantite}
+
+        nouveau_stock = ligne.quantite
+
+    return {
+        "sku": sku,
+        "quantite_ajoutee": q.quantite,
+        "nouveau_stock": nouveau_stock
+    }
 
 @app.get("/stock/{sku}")
 def lire_stock(sku: str):

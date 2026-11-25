@@ -3,8 +3,11 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
-engine = create_engine("sqlite:///catalogue.db")
+import os
 
+engine = create_engine(
+os.environ.get("DATABASE_URL", "sqlite:///catalogue.db")
+)
 
 class Base(DeclarativeBase):
     pass

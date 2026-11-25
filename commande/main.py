@@ -3,11 +3,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+import os
 
-CATALOGUE_URL = "http://localhost:8001"
-STOCK_URL = "http://localhost:8002"
+CATALOGUE_URL = os.environ.get("CATALOGUE_URL", "http://localhost:8001")
+STOCK_URL = os.environ.get("STOCK_URL", "http://localhost:8002")
+RABBIT_HOST = os.environ.get("RABBIT_HOST", "localhost")
 
-engine = create_engine("sqlite:///commande.db")
+engine = create_engine(
+os.environ.get("DATABASE_URL", "sqlite:///commande.db")
+)
 
 
 class Base(DeclarativeBase):

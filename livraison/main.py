@@ -12,7 +12,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 import os
 
 RABBIT_HOST = os.environ.get("RABBIT_HOST", "localhost")
-engine = create_engine("sqlite:///livraison.db")
+engine = create_engine(
+os.environ.get("DATABASE_URL", "sqlite:///livraison.db")
+)
 
 
 class Base(DeclarativeBase):
